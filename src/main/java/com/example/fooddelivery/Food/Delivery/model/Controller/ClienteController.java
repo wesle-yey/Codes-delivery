@@ -1,0 +1,57 @@
+package com.example.fooddelivery.Food.Delivery.model.Controller;
+
+import com.example.fooddelivery.Food.Delivery.model.Class.Cliente;
+import com.example.fooddelivery.Food.Delivery.model.Repository.ClienteRepository;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("v1/clientes")
+public class ClienteController {
+
+    private final ClienteRepository clienteRepository;
+
+    public ClienteController(ClienteRepository clienteRepository) {
+        this.clienteRepository = clienteRepository;
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Cliente> getCliente(@PathVariable Long id) {
+        Optional<Cliente> cliente = clienteRepository.findById(id);
+        return ResponseEntity.of(cliente);
+    }
+
+    @PostMapping
+    public ResponseEntity<Cliente> addCliente(
+            @RequestBody(required = false) Cliente clienteBody,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String email) {
+        Cliente cliente = clienteBody;
+        if (cliente == null || cliente.getName() == null) {
+            if (name == null || email == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            cliente = new Cliente(name, email);
+        }
+        Cliente novoCliente = clienteRepository.save(cliente);
+        return ResponseEntity.ok(novoCliente);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCliente(@PathVariable Long id) {
+        if (clienteRepository.existsById(id)) {
+            clienteRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping
+    public List<Cliente> getAllClientes() {
+        return clienteRepository.findAll();
+    }
+}
