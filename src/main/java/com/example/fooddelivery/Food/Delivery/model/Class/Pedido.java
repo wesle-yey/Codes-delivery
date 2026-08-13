@@ -31,6 +31,30 @@ public class Pedido {
 
     }
 
+    public void aceitarPedido() {
+        setPedidoStatus(PedidoStatusEnum.ACEITO);
+    }
+
+    public void recusarPedido() {
+        setPedidoStatus(PedidoStatusEnum.RECUSADO);
+    }
+
+    public void entregarPedido() throws Exception {
+        if (getPedidoStatus() == PedidoStatusEnum.RECUSADO) {
+            throw new Exception("Pedidos recusados não podem ser entregues.");
+        } else {
+            setPedidoStatus(PedidoStatusEnum.ENTREGUE);
+        }
+    }
+
+    public void avaliarPedido(PedidoNotaEnum pedidoNota) throws Exception {
+        if (getPedidoStatus() != PedidoStatusEnum.ENTREGUE) {
+            throw new Exception("Apenas pedidos entregues podem ser avaliados.");
+        } else {
+            setNotaPedido(pedidoNota);
+        }
+    }
+
     public PedidoStatusEnum getPedidoStatus() {
         return pedidoStatus;
     }
