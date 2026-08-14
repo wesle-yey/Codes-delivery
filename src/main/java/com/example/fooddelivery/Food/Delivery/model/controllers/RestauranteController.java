@@ -1,9 +1,7 @@
-package com.example.fooddelivery.Food.Delivery.model.Controller;
+package com.example.fooddelivery.Food.Delivery.model.controllers;
 
-import com.example.fooddelivery.Food.Delivery.model.Class.Restaurante;
-import com.example.fooddelivery.Food.Delivery.model.Repository.RestauranteRepository;
-import org.springframework.data.repository.core.support.RepositoryMethodInvocationListener;
-import org.springframework.http.HttpStatusCode;
+import com.example.fooddelivery.Food.Delivery.model.classes.Restaurante;
+import com.example.fooddelivery.Food.Delivery.model.repositories.RestauranteRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
