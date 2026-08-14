@@ -51,7 +51,7 @@ public class PedidoController {
         return HttpStatusCode.valueOf(200);
     }
 
-    @PatchMapping("/entregar/{id")
+    @PatchMapping("/entregar/{id}")
     public HttpStatusCode entregarPedido(@PathVariable Long id, @RequestParam Long idRestaurante) {
         try {
             Optional<Pedido> meuPedido= pedidoRepository.findById(id);
