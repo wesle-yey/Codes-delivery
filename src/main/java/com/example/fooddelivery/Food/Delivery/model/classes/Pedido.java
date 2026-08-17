@@ -72,9 +72,11 @@ public class Pedido {
             throw new Exception("Apenas pedidos entregues podem ser avaliados.");
         } else if (this.idCliente != idCliente) {
             throw new Exception("Você só pode avaliar os pedidos que você fez.");
-        } else {
-            setNotaPedido(notaPedido);
-        }
+        } else if (notaPedido == null || notaPedido < 1 || notaPedido > 5) {
+        throw new Exception("A nota da avaliação deve ser um valor inteiro entre 1 e 5.");
+    } else {
+        setNotaPedido(notaPedido);
+    }
     }
 
     public PedidoStatusEnum getPedidoStatus() {
