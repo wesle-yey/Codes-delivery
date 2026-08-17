@@ -26,42 +26,66 @@ public class PedidoController {
     }
 
     @PatchMapping("/aceitar/{id}")
-    public HttpStatusCode aceitarPedido(@PathVariable Long id, @RequestParam Long idRestaurante) {
+    public ResponseEntity<?> aceitarPedido(@PathVariable Long id, @RequestParam Long idRestaurante) {
         try {
             Optional<Pedido> meuPedido= pedidoRepository.findById(id);
             if (meuPedido.isPresent()) {
                 meuPedido.get().aceitarPedido(idRestaurante);
+                pedidoRepository.save(meuPedido.get());
+                return ResponseEntity.ok(meuPedido.get());
+            } else {
+                return ResponseEntity.status(404).body("Pedido não encontrado");
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return HttpStatusCode.valueOf(200);
+            return ResponseEntity.badRequest().body(e.getMessage());}
     }
 
     @PatchMapping("/recusar/{id}")
-    public HttpStatusCode recusarPedido(@PathVariable Long id, @RequestParam Long idRestaurante) {
+    public ResponseEntity<?> recusarPedido(@PathVariable Long id, @RequestParam Long idRestaurante) {
         try {
-            Optional<Pedido> meuPedido= pedidoRepository.findById(id);
+            Optional<Pedido> meuPedido = pedidoRepository.findById(id);
             if (meuPedido.isPresent()) {
                 meuPedido.get().recusarPedido(idRestaurante);
+                pedidoRepository.save(meuPedido.get());
+                return ResponseEntity.ok(meuPedido.get());
+            } else {
+                return ResponseEntity.status(404).body("Pedido não encontrado");
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return HttpStatusCode.valueOf(200);
     }
 
     @PatchMapping("/entregar/{id}")
-    public HttpStatusCode entregarPedido(@PathVariable Long id, @RequestParam Long idRestaurante) {
+    public ResponseEntity<?> entregarPedido(@PathVariable Long id, @RequestParam Long idRestaurante) {
         try {
             Optional<Pedido> meuPedido= pedidoRepository.findById(id);
             if (meuPedido.isPresent()) {
                 meuPedido.get().entregarPedido(idRestaurante);
+                pedidoRepository.save(meuPedido.get());
+                return ResponseEntity.ok(meuPedido.get());
+            } else {
+                return ResponseEntity.status(404).body("Pedido não encontrado");
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage()).getStatusCode();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return HttpStatusCode.valueOf(200);
+    }
+
+    @PostMapping("/avaliar/{id}")
+    public ResponseEntity<?> avaliarPedido(@PathVariable Long id, @RequestParam Long idCliente, @RequestParam Integer notaPedido ) {
+        try {
+            Optional<Pedido> pedido= pedidoRepository.findById(id);
+            if (pedido.isPresent()) {
+                pedido.get().avaliarPedido(notaPedido, idCliente);
+                pedidoRepository.save(pedido.get());
+                return ResponseEntity.ok(pedido.get());
+            } else {
+                return ResponseEntity.status(404).body("Pedido não encontrado");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping
@@ -69,12 +93,17 @@ public class PedidoController {
         return Optional.of(pedidoRepository.findAll());
     }
 
-    @GetMapping
-    public Optional<Pedido> getPedido(@RequestParam Long id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getPedido(@PathVariable Long id) {
         try {
-            return pedidoRepository.findById(id);
+            Optional<Pedido> meuPedido= pedidoRepository.findById(id);
+            if (meuPedido.isPresent()) {
+                return ResponseEntity.ok(meuPedido.get());
+            } else {
+                return ResponseEntity.status(404).body("Pedido não encontrado");
+            }
         } catch (RuntimeException e) {
-            throw new RuntimeException(e);
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
     }

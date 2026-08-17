@@ -1,10 +1,10 @@
 package com.example.fooddelivery.Food.Delivery.model.classes;
 
-import com.example.fooddelivery.Food.Delivery.model.enums.PedidoNotaEnum;
 import com.example.fooddelivery.Food.Delivery.model.enums.PedidoStatusEnum;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.data.annotation.CreatedDate;
 
 import java.time.LocalDateTime;
 
@@ -18,7 +18,9 @@ public class Pedido {
     private Long idCliente;
     @Enumerated(EnumType.STRING)
     private PedidoStatusEnum pedidoStatus= PedidoStatusEnum.CRIADO;
-    private PedidoNotaEnum notaPedido;
+    @Min(1)
+    @Max(5)
+    private Integer notaPedido;
     @CreationTimestamp
     private LocalDateTime createdAt;
 
@@ -65,13 +67,13 @@ public class Pedido {
         }
     }
 
-    public void avaliarPedido(PedidoNotaEnum pedidoNota, Long idCliente) throws Exception {
+    public void avaliarPedido(Integer notaPedido, Long idCliente) throws Exception {
         if (getPedidoStatus() != PedidoStatusEnum.ENTREGUE) {
             throw new Exception("Apenas pedidos entregues podem ser avaliados.");
         } else if (this.idCliente != idCliente) {
             throw new Exception("Você só pode avaliar os pedidos que você fez.");
         } else {
-            setNotaPedido(pedidoNota);
+            setNotaPedido(notaPedido);
         }
     }
 
@@ -83,11 +85,11 @@ public class Pedido {
         this.pedidoStatus = pedidoStatus;
     }
 
-    public PedidoNotaEnum getNotaPedido() {
+    public Integer getNotaPedido() {
         return notaPedido;
     }
 
-    public void setNotaPedido(PedidoNotaEnum notaPedido) {
+    public void setNotaPedido(Integer notaPedido) {
         this.notaPedido = notaPedido;
     }
 
