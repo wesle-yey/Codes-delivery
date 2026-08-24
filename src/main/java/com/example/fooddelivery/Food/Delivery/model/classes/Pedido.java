@@ -12,14 +12,12 @@ import java.time.LocalDateTime;
 @Table(name = "pedidos")
 public class Pedido {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private Long idRestaurante;
     private Long idCliente;
     @Enumerated(EnumType.STRING)
     private PedidoStatusEnum pedidoStatus= PedidoStatusEnum.CRIADO;
-    @Min(1)
-    @Max(5)
     private Integer notaPedido;
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -99,4 +97,27 @@ public class Pedido {
         return id;
     }
 
+    public Long getIdRestaurante() {
+        return idRestaurante;
+    }
+
+    public void setIdRestaurante(Long idRestaurante) {
+        this.idRestaurante = idRestaurante;
+    }
+
+    public Long getIdCliente() {
+        return idCliente;
+    }
+
+    public void setIdCliente(Long idCliente) {
+        this.idCliente = idCliente;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

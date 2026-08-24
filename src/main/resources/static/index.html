@@ -102,6 +102,7 @@
         }
 
         button:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
@@ -118,7 +119,7 @@
             background: rgba(15, 23, 42, 0.8);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 1rem;
+            padding: 1.25rem;
             position: relative;
         }
 
@@ -142,14 +143,13 @@
         .badge-RECUSADO { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
         .badge-ENTREGUE { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
 
-        .pedido-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 0.5rem;
+        .action-box {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
             margin-top: 0.75rem;
         }
-
-        .pedido-actions button { font-size: 0.8rem; padding: 0.4rem; }
 
         .toast {
             position: fixed;
@@ -181,11 +181,11 @@
             <h2>➕ Cadastros Rápidos</h2>
             
             <form id="form-cliente" style="margin-bottom: 1.5rem;">
-                <label>Cadastrar Cliente</label>
+                <label>Cadastrar Cliente (E-mail Único)</label>
                 <div style="display: flex; gap: 0.5rem;">
                     <input type="text" id="cli-nome" placeholder="Nome" required>
                     <input type="email" id="cli-email" placeholder="Email" required>
-                    <button type="submit" style="width: auto;">Salvar</button>
+                    <button type="submit" id="btn-salvar-cli" style="width: auto;">Salvar</button>
                 </div>
             </form>
 
@@ -193,7 +193,7 @@
                 <label>Cadastrar Restaurante</label>
                 <div style="display: flex; gap: 0.5rem;">
                     <input type="text" id="rest-nome" placeholder="Nome do Restaurante" required>
-                    <button type="submit" style="width: auto;">Salvar</button>
+                    <button type="submit" id="btn-salvar-rest" style="width: auto;">Salvar</button>
                 </div>
             </form>
         </div>
@@ -203,20 +203,20 @@
             <h2>🛒 Criar Pedido</h2>
             <form id="form-pedido">
                 <div class="form-group">
-                    <label>Selecione o Cliente</label>
+                    <label>Selecione o Cliente Criador</label>
                     <select id="select-cliente" required><option value="">Carregando...</option></select>
                 </div>
                 <div class="form-group">
-                    <label>Selecione o Restaurante</label>
+                    <label>Selecione o Restaurante Destino</label>
                     <select id="select-restaurante" required><option value="">Carregando...</option></select>
                 </div>
-                <button type="submit" class="btn-info">Fazer Pedido (Status: CRIADO)</button>
+                <button type="submit" id="btn-salvar-ped" class="btn-info">Fazer Pedido (Status: CRIADO)</button>
             </form>
         </div>
 
         <!-- Gestão e Fluxo de Pedidos -->
         <div class="card" style="grid-column: 1 / -1;">
-            <h2>📋 Acompanhamento e Fluxo de Pedidos</h2>
+            <h2>📋 Acompanhamento e Teste de Ações de Pedidos</h2>
             <div id="lista-pedidos" class="pedidos-list">
                 <p style="color: var(--text-muted);">Nenhum pedido encontrado.</p>
             </div>
@@ -227,13 +227,15 @@
 
     <script>
         const API_URL = '/v1';
+        let listaClientesCache = [];
+        let listaRestaurantesCache = [];
 
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
             toast.className = `toast ${isError ? 'toast-error' : 'toast-success'}`;
             toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 4000);
+            setTimeout(() => toast.style.display = 'none', 4500);
         }
 
         async function carregarAuxiliares() {
@@ -243,11 +245,22 @@
                     fetch(`${API_URL}/restaurantes`).then(r => r.json())
                 ]);
 
+                listaClientesCache = clientes || [];
+                listaRestaurantesCache = restaurantes || [];
+
                 const selCli = document.getElementById('select-cliente');
-                selCli.innerHTML = clientes.map(c => `<option value="${c.id}">${c.name} (ID: ${c.id})</option>`).join('');
+                if (listaClientesCache.length === 0) {
+                    selCli.innerHTML = '<option value="">Nenhum cliente cadastrado</option>';
+                } else {
+                    selCli.innerHTML = listaClientesCache.map(c => `<option value="${c.id}">${c.name} (${c.email}) - ID: ${c.id}</option>`).join('');
+                }
 
                 const selRest = document.getElementById('select-restaurante');
-                selRest.innerHTML = restaurantes.map(r => `<option value="${r.id}">${r.name} (ID: ${r.id})</option>`).join('');
+                if (listaRestaurantesCache.length === 0) {
+                    selRest.innerHTML = '<option value="">Nenhum restaurante cadastrado</option>';
+                } else {
+                    selRest.innerHTML = listaRestaurantesCache.map(r => `<option value="${r.id}">${r.name} - ID: ${r.id}</option>`).join('');
+                }
             } catch (e) {
                 console.error("Erro ao carregar dados", e);
             }
@@ -264,36 +277,58 @@
                     return;
                 }
 
-                container.innerHTML = pedidos.map(p => `
+                container.innerHTML = pedidos.map(p => {
+                    const restauranteDono = listaRestaurantesCache.find(r => String(r.id) === String(p.idRestaurante));
+                    const clienteDono = listaClientesCache.find(c => String(c.id) === String(p.idCliente));
+
+                    const optionsRestaurantes = listaRestaurantesCache.map(r => 
+                        `<option value="${r.id}" ${String(r.id) === String(p.idRestaurante) ? 'selected' : ''}>${r.name} (ID: ${r.id})</option>`
+                    ).join('');
+
+                    const optionsClientes = listaClientesCache.map(c => 
+                        `<option value="${c.id}" ${String(c.id) === String(p.idCliente) ? 'selected' : ''}>${c.name} (ID: ${c.id})</option>`
+                    ).join('');
+
+                    return `
                     <div class="pedido-item">
                         <div class="pedido-header">
                             <strong>Pedido #${p.id}</strong>
                             <span class="badge badge-${p.pedidoStatus}">${p.pedidoStatus}</span>
                         </div>
-                        <p style="font-size: 0.9rem; color: var(--text-muted);">
-                            Cliente ID: <b>${p.idCliente}</b> | Restaurante ID: <b>${p.idRestaurante}</b>
+                        <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                            Cliente Criador: <b style="color: var(--text);">${clienteDono ? clienteDono.name : 'ID ' + p.idCliente}</b> | 
+                            Restaurante Destino: <b style="color: var(--primary);">${restauranteDono ? restauranteDono.name : 'ID ' + p.idRestaurante}</b>
                             ${p.notaPedido ? ` | Nota: <b style="color: var(--primary);">⭐ ${p.notaPedido}/5</b>` : ''}
                         </p>
 
-                        <div class="pedido-actions">
-                            ${p.pedidoStatus === 'CRIADO' ? `
-                                <button class="btn-success" onclick="aceitarPedido(${p.id}, ${p.idRestaurante})">Aceitar</button>
-                                <button class="btn-danger" onclick="recusarPedido(${p.id}, ${p.idRestaurante})">Recusar</button>
-                            ` : ''}
-
-                            ${p.pedidoStatus === 'ACEITO' ? `
-                                <button class="btn-info" onclick="entregarPedido(${p.id}, ${p.idRestaurante})">Confirmar Entrega</button>
-                            ` : ''}
-
-                            ${p.pedidoStatus === 'ENTREGUE' && !p.notaPedido ? `
-                                <div style="display: flex; gap: 0.25rem; grid-column: 1 / -1;">
-                                    <input type="number" id="nota-${p.id}" min="1" max="5" placeholder="Nota (1-5)" style="width: 100px;">
-                                    <button class="btn-success" onclick="avaliarPedido(${p.id}, ${p.idCliente})">Avaliar</button>
+                        ${(p.pedidoStatus === 'CRIADO' || p.pedidoStatus === 'ACEITO') ? `
+                            <div class="action-box">
+                                <label>Restaurante Atuante (Selecione para testar validação de pertence):</label>
+                                <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                                    <select id="op-rest-${p.id}">${optionsRestaurantes}</select>
+                                    ${p.pedidoStatus === 'CRIADO' ? `
+                                        <button class="btn-success" onclick="aceitarPedido(${p.id}, this)">Aceitar</button>
+                                        <button class="btn-danger" onclick="recusarPedido(${p.id}, this)">Recusar</button>
+                                    ` : ''}
+                                    ${p.pedidoStatus === 'ACEITO' ? `
+                                        <button class="btn-info" onclick="entregarPedido(${p.id}, this)">Confirmar Entrega</button>
+                                    ` : ''}
                                 </div>
-                            ` : ''}
-                        </div>
+                            </div>
+                        ` : ''}
+
+                        ${(p.pedidoStatus === 'ENTREGUE' && !p.notaPedido) ? `
+                            <div class="action-box">
+                                <label>Cliente Atuante & Nota (Selecione para testar validação de pertence):</label>
+                                <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                                    <select id="op-cli-${p.id}">${optionsClientes}</select>
+                                    <input type="number" id="nota-${p.id}" min="1" max="5" placeholder="Nota (1-5)" style="width: 110px;">
+                                    <button class="btn-success" onclick="avaliarPedido(${p.id}, this)">Avaliar</button>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
-                `).join('');
+                `}).join('');
             } catch (e) {
                 console.error("Erro ao carregar pedidos", e);
             }
@@ -301,75 +336,147 @@
 
         document.getElementById('form-cliente').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('btn-salvar-cli');
+            btn.disabled = true;
+            
             const name = document.getElementById('cli-nome').value;
             const email = document.getElementById('cli-email').value;
-            const res = await fetch(`${API_URL}/clientes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email })
-            });
-            if (res.ok) {
-                showToast("Cliente cadastrado!");
-                carregarAuxiliares();
+            
+            try {
+                const res = await fetch(`${API_URL}/clientes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email })
+                });
+                
+                if (res.ok) {
+                    showToast("Cliente cadastrado com sucesso!");
+                    e.target.reset();
+                    await carregarAuxiliares();
+                    carregarPedidos();
+                } else {
+                    const text = await res.text();
+                    showToast(text || "Erro ao cadastrar cliente", true);
+                }
+            } catch (err) {
+                showToast("Erro na requisição", true);
+            } finally {
+                btn.disabled = false;
             }
         });
 
         document.getElementById('form-restaurante').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('btn-salvar-rest');
+            btn.disabled = true;
+            
             const name = document.getElementById('rest-nome').value;
-            const res = await fetch(`${API_URL}/restaurantes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            });
-            if (res.ok) {
-                showToast("Restaurante cadastrado!");
-                carregarAuxiliares();
+            
+            try {
+                const res = await fetch(`${API_URL}/restaurantes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if (res.ok) {
+                    showToast("Restaurante cadastrado com sucesso!");
+                    e.target.reset();
+                    await carregarAuxiliares();
+                    carregarPedidos();
+                } else {
+                    const text = await res.text();
+                    showToast(text || "Erro ao cadastrar restaurante", true);
+                }
+            } catch (err) {
+                showToast("Erro na requisição", true);
+            } finally {
+                btn.disabled = false;
             }
         });
 
         document.getElementById('form-pedido').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('btn-salvar-ped');
+            btn.disabled = true;
+            
             const idCliente = document.getElementById('select-cliente').value;
             const idRestaurante = document.getElementById('select-restaurante').value;
-            const res = await fetch(`${API_URL}/pedidos?idCliente=${idCliente}&idRestaurante=${idRestaurante}`, { method: 'POST' });
-            if (res.ok) {
-                showToast("Pedido criado com sucesso!");
-                carregarPedidos();
+            
+            if (!idCliente || !idRestaurante) {
+                showToast("Selecione um cliente e um restaurante!", true);
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/pedidos?idCliente=${idCliente}&idRestaurante=${idRestaurante}`, { method: 'POST' });
+                if (res.ok) {
+                    showToast("Pedido criado com sucesso (Status: CRIADO)!");
+                    carregarPedidos();
+                } else {
+                    const text = await res.text();
+                    showToast(text || "Erro ao criar pedido", true);
+                }
+            } catch (err) {
+                showToast("Erro na requisição", true);
+            } finally {
+                btn.disabled = false;
             }
         });
 
-        async function aceitarPedido(id, idRestaurante) {
-            const res = await fetch(`${API_URL}/pedidos/aceitar/${id}?idRestaurante=${idRestaurante}`, { method: 'PATCH' });
-            const data = await res.text();
-            if (res.ok) { showToast("Pedido Aceito!"); carregarPedidos(); }
-            else { showToast(data, true); }
+        async function aceitarPedido(id, btn) {
+            const idRestaurante = document.getElementById(`op-rest-${id}`).value;
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${API_URL}/pedidos/aceitar/${id}?idRestaurante=${idRestaurante}`, { method: 'PATCH' });
+                const data = await res.text();
+                if (res.ok) { showToast("Pedido Aceito com sucesso!"); carregarPedidos(); }
+                else { showToast(data, true); btn.disabled = false; }
+            } catch (err) { showToast("Erro na requisição", true); btn.disabled = false; }
         }
 
-        async function recusarPedido(id, idRestaurante) {
-            const res = await fetch(`${API_URL}/pedidos/recusar/${id}?idRestaurante=${idRestaurante}`, { method: 'PATCH' });
-            const data = await res.text();
-            if (res.ok) { showToast("Pedido Recusado!"); carregarPedidos(); }
-            else { showToast(data, true); }
+        async function recusarPedido(id, btn) {
+            const idRestaurante = document.getElementById(`op-rest-${id}`).value;
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${API_URL}/pedidos/recusar/${id}?idRestaurante=${idRestaurante}`, { method: 'PATCH' });
+                const data = await res.text();
+                if (res.ok) { showToast("Pedido Recusado!"); carregarPedidos(); }
+                else { showToast(data, true); btn.disabled = false; }
+            } catch (err) { showToast("Erro na requisição", true); btn.disabled = false; }
         }
 
-        async function entregarPedido(id, idRestaurante) {
-            const res = await fetch(`${API_URL}/pedidos/entregar/${id}?idRestaurante=${idRestaurante}`, { method: 'PATCH' });
-            const data = await res.text();
-            if (res.ok) { showToast("Pedido Entregue!"); carregarPedidos(); }
-            else { showToast(data, true); }
+        async function entregarPedido(id, btn) {
+            const idRestaurante = document.getElementById(`op-rest-${id}`).value;
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${API_URL}/pedidos/entregar/${id}?idRestaurante=${idRestaurante}`, { method: 'PATCH' });
+                const data = await res.text();
+                if (res.ok) { showToast("Pedido Entregue com sucesso!"); carregarPedidos(); }
+                else { showToast(data, true); btn.disabled = false; }
+            } catch (err) { showToast("Erro na requisição", true); btn.disabled = false; }
         }
 
-        async function avaliarPedido(id, idCliente) {
+        async function avaliarPedido(id, btn) {
+            const idCliente = document.getElementById(`op-cli-${id}`).value;
             const nota = document.getElementById(`nota-${id}`).value;
-            const res = await fetch(`${API_URL}/pedidos/avaliar/${id}?idCliente=${idCliente}&notaPedido=${nota}`, { method: 'POST' });
-            const data = await res.text();
-            if (res.ok) { showToast("Pedido Avaliado!"); carregarPedidos(); }
-            else { showToast(data, true); }
+            if (!nota) { showToast("Informe uma nota de 1 a 5", true); return; }
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${API_URL}/pedidos/avaliar/${id}?idCliente=${idCliente}&notaPedido=${nota}`, { method: 'POST' });
+                const data = await res.text();
+                if (res.ok) { showToast("Pedido Avaliado com sucesso!"); carregarPedidos(); }
+                else { showToast(data, true); btn.disabled = false; }
+            } catch (err) { showToast("Erro na requisição", true); btn.disabled = false; }
         }
 
-        carregarAuxiliares();
-        carregarPedidos();
+        async function init() {
+            await carregarAuxiliares();
+            await carregarPedidos();
+        }
+
+        init();
     </script>
 </body>
 </html>
