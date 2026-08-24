@@ -9,9 +9,10 @@ import java.time.LocalDateTime;
 @Table(name= "clientes")
 public class Cliente {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String name;
+    @Column(unique = true)
     private String email;
     @CreationTimestamp
     private LocalDateTime createdAt;

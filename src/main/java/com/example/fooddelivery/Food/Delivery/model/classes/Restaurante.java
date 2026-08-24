@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Table(name = "restaurantes")
 public class Restaurante {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String name;
     @CreationTimestamp

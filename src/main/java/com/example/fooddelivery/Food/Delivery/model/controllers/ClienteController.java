@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("v1/clientes")
+@RequestMapping("/v1/clientes")
 public class ClienteController {
 
     private final ClienteRepository clienteRepository;
@@ -25,17 +25,22 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ResponseEntity<Cliente> addCliente(
+    public ResponseEntity<?> addCliente(
             @RequestBody(required = false) Cliente clienteBody,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String email) {
         Cliente cliente = clienteBody;
         if (cliente == null || cliente.getName() == null) {
             if (name == null || email == null) {
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.badRequest().body("Nome e e-mail são obrigatórios.");
             }
             cliente = new Cliente(name, email);
         }
+
+        if (cliente.getEmail() != null && clienteRepository.existsByEmail(cliente.getEmail())) {
+            return ResponseEntity.badRequest().body("E-mail já cadastrado.");
+        }
+
         Cliente novoCliente = clienteRepository.save(cliente);
         return ResponseEntity.ok(novoCliente);
     }
