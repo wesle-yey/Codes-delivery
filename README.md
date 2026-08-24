@@ -1,4 +1,4 @@
-# 🚴‍♂️ Aplicação de Food Delivery - Fluxo de Pedidos e Avaliações
+# Aplicação de Food Delivery - Fluxo de Pedidos e Avaliações
 
 [![Java 17](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
@@ -89,8 +89,3 @@ A aplicação estará acessível em:
 | `POST` | `/v1/pedidos/avaliar/{id}` | `idCliente`, `notaPedido` | Avalia pedido (`ENTREGUE` → `AVALIADO`, nota 1 a 5) |
 
 ---
-
-## 📖 Arquitetura e Solução Técnica
-
-Para mais detalhes sobre a arquitetura, modelagem de banco de dados (ERD) e diagrama de estados, consulte o documento:
-👉 [Desenho da Solução / ARQUITETURA.md](file:///c:/Users/clash/Desktop/Food-Delivery/docs/ARQUITETURA.md)

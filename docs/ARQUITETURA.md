@@ -2,7 +2,7 @@
 
 ## 1. Visão Geral da Solução
 
-A aplicação de **Food Delivery** é uma API REST desenvolvida com o ecossistema Java/Spring Boot e banco de dados relacional PostgreSQL. O objetivo principal da solução é garantir o controle rigoroso da máquina de estados dos pedidos e o pertencimento das ações aos respectivos atores (Clientes e Restaurantes).
+A aplicação de **Food Delivery** é uma API REST desenvolvida com o ecossistema Java/Spring Boot e banco de dados relacional PostgreSQL. O objetivo principal da solução é garantir o controle de estados dos pedidos.
 
 ---
 
