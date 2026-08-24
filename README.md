@@ -21,6 +21,13 @@ Aplicação completa de **Food Delivery** desenvolvida em **Java / Spring Boot**
 
 ---
 
+## 🏗️ Arquitetura e Modelagem de Dados
+
+Para detalhes sobre o desenho da solução, tecnologias e a modelagem de dados, consulte:
+- 📑 [Documentação de Arquitetura e Modelagem (docs/ARQUITETURA.md)](docs/ARQUITETURA.md)
+
+---
+
 ## 🚦 Regras de Negócio e Máquina de Estados
 
 O pedido segue obrigatoriamente a seguinte sequência de status:
